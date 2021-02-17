@@ -112,15 +112,13 @@ export default {
 
       },
     cellsTransition(){
-        console.log("cell transition")
       this.cells.transition()
           .duration(d => d.y * 100)
           .ease(d3.easeBounceOut)
-          .attr("y", d => console.log(this.scale(d.y)) || this.scale(d.y));
+          .attr("y", d => this.scale(d.y));
 
       this.svg.transition().delay(550)
           .on("end", this.drawLegend);
-      console.log("cells:",this.cells);
 
 
     },
@@ -145,8 +143,10 @@ export default {
       this.legend.append("text")
           .attr("dx", 40)
           .attr("alignment-baseline", "hanging")
+          .attr("text-anchor","start")
+          .attr("fill","currentColor")
+          .attr("font-weight", "bold")
           .text((d, i) =>  `${d} (${this.waffleChartData[i].ratio_spread}%)`);
-          //.text((d, i) =>  `${d} (${this.waffleChartData.filter(d => d.ratio_spread != 0)[i].ratio_spread}%)`);
 
     },
     highlight(e) {

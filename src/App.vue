@@ -1,7 +1,8 @@
 <template>
-  <v-app>
+  <v-app style="background-color: white!important;">
+
     <v-app-bar app color="primary" dark fixed >
-    <v-app-bar-title>National Footprints</v-app-bar-title>
+    <v-app-bar-title>National Footprint Accounts</v-app-bar-title>
 
       <v-spacer></v-spacer>
 
@@ -42,13 +43,11 @@
               style="z-index: 0;"
            v-if="map_data"
            :map_data="map_data"
+              :attr_data="attr_data"
            :selectedAttr="valueAttr"
            :selectedRecord="valueRecord"
-           :max="max_val"
-           :min="min_val"
            @selectedCountry="createChartData"
            @selectedColor="loadSelectedColor"
-           :lineChartCountry="lineChartCountry"
           >
 
           </Map>
@@ -73,12 +72,10 @@
            :lineData="lineData"
                 :margin="({top: 20,right: 20,bottom: 30,left: 30})"
                 :height="350"
-                :selectedAttr="valueAttr"
-                :width="600"
+                :selectedAttrLine="valueAttr"
+                :width="550"
                 :selectedColor="selectedColor"
                 :selectedCountry="selectedCountry"
-                @lineChartCountry="loadLineChartCountry"
-                @lineChartYear="loadLineChartYear"
 
 
 
@@ -112,7 +109,7 @@ export default {
     map_data: null,
     attr_data: null,
     itemsYear: null,
-    itemsAttr: ["Crop_Land","Grazing_Land","Forest_Land", "Fishing_Ground","Built_Up_Land", "Carbon","Total_Land","GDP_per_Capita","Population"],
+    itemsAttr: ["Crop_Land","Grazing_Land","Forest_Land", "Fishing_Ground","Built_Up_Land", "Total","Population"],
     itemsRecord: null,
     valueYear: 2014,
     valueAttr: "Forest_Land",
@@ -122,14 +119,15 @@ export default {
     waffleChartData: null,
     waffleArr: null,
     lineData: null,
-    selectedColor: null,
+    selectedColor: "#74c476",
     selectedCountry: null,
-    lineChartCountry: null
 
   }),
   created() {
     this.itemsYear =  [...new Set(attr_data_import.map(item => item.year))].sort().reverse();
     this.itemsRecord =  [...new Set(attr_data_import.map(item => item.record))];
+    this.$vuetify.theme.themes.light.background = '#FFF';
+    this.$vuetify.theme.themes.dark.background = '#FFF';
   },
   mounted() {
 
@@ -141,6 +139,8 @@ export default {
   },
   methods: {
     toggleTheme() {
+    //  console.log("toggle theme")
+     // console.log(this.selectedColor);
       this.$vuetify.theme.themes.light.primary = this.selectedColor
       this.$vuetify.theme.themes.dark.primary = this.selectedColor
     },
@@ -150,11 +150,15 @@ export default {
     },
     constructMapData() {
       console.log("constructing");
-      this.attr_data = attr_data_import.filter(d => d.year === this.valueYear & d.record === this.valueRecord);
+
+
+      console.log(attr_data_import[36641])
+      this.attr_data = attr_data_import.filter(d => d.year === this.valueYear && d.record === this.valueRecord);
+      console.log(this.attr_data);
       for(const feature of geoJson.features) {
         for (const obj of this.attr_data) {
           if (feature.properties.ADMIN === obj.country) {
-            feature.properties[this.valueAttr] = obj[this.valueAttr.toLowerCase()];
+              feature.properties[this.valueAttr] = obj[this.valueAttr.toLowerCase()];
           } else {
             continue;
           }
@@ -297,19 +301,16 @@ let lowerArr = Array(lowerArrLen).fill(0)
       dateArr = yearFilteredData.map(d => timeParser(d.year));
       this.lineData.dates = dateArr;
 
-      //console.log("this.lineData:",this.lineData);
+      console.log("this.lineData:",this.lineData);
+
 
     },
     loadSelectedColor(color){
+      //console.log("loadSelectedColor")
       this.selectedColor = color;
       this.toggleTheme();
     },
-    loadLineChartCountry(lineChartCountry){
-      this.lineChartCountry = lineChartCountry;
-    },
-    loadLineChartYear(lineChartYear){
-      this.valueYear = lineChartYear;
-    }
+
 
 
 
@@ -323,5 +324,11 @@ let lowerArr = Array(lowerArrLen).fill(0)
 };
 </script>
 <style>
-
+#mapid {
+  height: 480px;
+}
+.v-application .info {
+  background-color: white !important;
+  border-color:white !important;
+}
 </style>

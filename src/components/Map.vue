@@ -14,7 +14,6 @@
 <script>
 import * as d3 from 'd3'
 import * as L from "leaflet"
-//import * as chroma from "chroma-js"
 
 export default {
   name: 'Map',
@@ -22,18 +21,13 @@ export default {
     map_data: {
       required: true
     },
-    lineChartCountry: {
-    },
     selectedAttr: {
       required: true
     },
-    max: {
-      required: true
-    },
-    min: {
-      required: true
-    },
     selectedRecord: {
+      required: true
+    },
+    attr_data: {
       required: true
     }
 
@@ -43,21 +37,20 @@ export default {
     map_data: {
       handler: function (val) {
         this.map_data = val;
+      },
+      deep: true
+    },
+    attr_data: {
+      handler: function (val) {
+        this.attr_data = val;
         this.init();
       },
       deep: true
     },
-    lineChartCountry: {
-      handler: function (val) {
-        this.lineChartCountry = val;
-        this.flyToLineCountry()
-      },
-      deep: true
-    },
+
     selectedRecord: {
       handler: function (val) {
         this.selectedRecord = val;
-        this.init();
       },
       deep: true
     },
@@ -67,25 +60,12 @@ export default {
       },
       deep: true
     },
-    max: {
-      handler: function (val) {
-        this.max = val;
-        this.init();
-      },
-      deep: true
-    },
-    min: {
-      handler: function (val) {
-        this.min = val;
-      },
-      deep: true
-    },
 
   },
   data: () => ({
     selectedCountry: null,
     info: null,
-    legend: null,
+    //legend: null,
     colorArr: null,
     legendLabels: null,
     firstQuantile: null,
@@ -102,7 +82,6 @@ export default {
   created() {
   },
   mounted() {
-    //console.log("init map");
     this.map = L.map("mapid").setView([51.505, -0.09], 2);
 
     this.map.doubleClickZoom.disable();
@@ -120,6 +99,9 @@ export default {
   methods: {
     init() {
 
+      console.log("map init")
+      console.log("map_data",this.map_data);
+      console.log(this.selectedAttr)
 
       this.colorArr = [];
 
@@ -139,6 +121,7 @@ export default {
       this.sixthQuantile = d3.quantile(this.colorArr, 0.75);
       this.seventhQuantile = d3.quantile(this.colorArr, 0.875);
 
+      /*
       this.legendLabels = [];
       this.legendLabels.push(this.firstQuantile)
       this.legendLabels.push(this.secondQuantile)
@@ -148,6 +131,8 @@ export default {
       this.legendLabels.push(this.sixthQuantile)
       this.legendLabels.push(this.seventhQuantile)
       this.legendLabels.unshift(0);
+    */
+
 
       L.geoJSON(this.map_data).addTo(this.map);
       this.geoJson = L.geoJSON(this.map_data, {style: this.style, onEachFeature: this.onEachFeature}).addTo(this.map);
@@ -157,18 +142,20 @@ export default {
       if (this.info != null) {
         this.info.remove();
       }
-      if (this.legend != null) {
-        //console.log("remove legend")
+      /*
+      if (conslegend != null) {
+        console.log("remove legend");
         this.legend.remove();
       }
+     */
 
       this.info = L.control();
 
       // eslint-disable-next-line no-unused-vars
       this.info.onAdd = function (map) {
-        //console.log("on add");
-        this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
-        this.update()
+        this._div = L.DomUtil.create('div', 'info');
+        //this._div = L.DomUtil.addClass("information");
+        this.update();
         return this._div;
       }
 
@@ -193,17 +180,19 @@ export default {
 
       this.info.addTo(this.map);
 
-      this.legend = L.control({position: "bottomright"});
+
+     /*
+      let legend = L.control({position: "bottomleft"});
 
       // eslint-disable-next-line no-unused-vars
-      this.legend.onAdd = function (map) {
-        //console.log("legend on add")
+      legend.onAdd = function (map) {
+        console.log("add legend")
         this.div = L.DomUtil.create('div', 'info legend')
         return this.div;
       }
 
-      this.legend.update = function (self) {
-        //console.log("legend update");
+      legend.update = function (self) {
+        console.log("legend update");
         for (var i = 0; i < self.legendLabels.length; i++) {
           this.div.innerHTML +=
               '<i style="background:' + self.getColor(self.legendLabels[i] + 0.01) + '"></i> ' +
@@ -212,8 +201,11 @@ export default {
       }
 
 
-      this.legend.addTo(this.map);
-      this.legend.update(this);
+      legend.addTo(this.map);
+      legend.update(this)
+      */
+
+     // this.legend.update(this);
 
       if (this.selectedAttr === "Forest_Land") {
         this.selectedColor = "#74c476";
@@ -247,7 +239,6 @@ export default {
 
     },
     style(feature) {
-      //console.log("styling")
 
       return {
         fillColor: this.getColor(feature.properties[this.selectedAttr]),
@@ -259,7 +250,6 @@ export default {
       }
     },
     highlightFeature(e) {
-      //console.log("highlighFeature")
 
       var layer = e.target;
 
@@ -277,13 +267,11 @@ export default {
     },
 
     resetHighlight(e) {
-      //console.log("resetHighlight")
       this.geoJson.resetStyle(e.target);
       this.info.update()
     },
 
     zoomToFeature(e) {
-      //console.log("zoomToFeature")
       this.map.fitBounds(e.target.getBounds());
       this.selectedCountry = e.sourceTarget.feature.properties.ADMIN;
       this.$emit("selectedCountry", this.selectedCountry);
@@ -296,27 +284,12 @@ export default {
     },
 
     onEachFeature(feature, layer) {
-      //console.log("onEachFeature")
       layer.on({
         mouseover: this.highlightFeature,
         mouseout: this.resetHighlight,
         click: this.zoomToFeature,
         dblclick: this.zoomOut
       });
-    },
-    flyToLineCountry() {
-console.log(this.map_data);
-for(const feature of this.map_data.features){
-  let obj = feature.properties
-  console.log(obj);
-  if(obj.ADMIN === this.lineChartCountry){
-    this.map.flyTo(obj.geometry.coordinates[0])
-  }
-  else{
-    continue;
-  }
-
-}
     },
 
     getColor(d) {
@@ -421,11 +394,14 @@ for(const feature of this.map_data.features){
 </script>
 
 <style>
-#mapid {
-  height: 480px;
+
+.v-application .info {
+  background-color: white !important;
+  border-color: white !important;
 }
 
- .v-application .info  {
+
+.info {
   padding: 6px 8px;
   font: 14px/16px Arial, Helvetica, sans-serif;
   background: white !important;
@@ -447,5 +423,9 @@ for(const feature of this.map_data.features){
   float: left;
   margin-right: 8px;
   opacity: 0.7;
+
+}
+.legend #text {
+  font-size: smaller;
 }
 </style>

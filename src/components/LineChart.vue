@@ -27,7 +27,7 @@ export default {
     margin: {
       required: true
     },
-    selectedAttr: {
+    selectedAttrLine: {
       required: true
     },
     width: {
@@ -52,14 +52,14 @@ export default {
     },
     selectedCountry: {
       handler: function (val) {
-        this.selectedColor = val;
+        this.selectedCountry = val;
         this.init();
       },
       deep: true
     },
-    selectedAttr: {
+    selectedAttrLine: {
       handler: function (val) {
-        this.selectedAttrUpper = val;
+        this.selectedAttrLine = val;
       },
       deep: true
     }
@@ -81,7 +81,7 @@ export default {
     zy: null,
     zoom: null,
     s: null,
-    xm: null
+    xm: null,
 
 
 
@@ -92,20 +92,18 @@ export default {
   },
   mounted() {
 
-    console.log("mounted line chart")
     this.init();
   },
   methods: {
     init() {
-      this.selectedAttr = this.selectedAttr.toLowerCase();
-
 
       this.x = d3.scaleUtc()
           .domain(d3.extent(this.lineData.dates))
           .range([this.margin.left, this.width - this.margin.right])
 
+
       this.y = d3.scaleLinear()
-          .domain([0, d3.max(this.lineData.series, d => d3.max(d[this.selectedAttr]))]).nice()
+          .domain([0, d3.max(this.lineData.series, d => d3.max(d[this.selectedAttrLine.toLowerCase()]))]).nice()
           .range([this.height - this.margin.bottom, this.margin.top])
 
       this.line = d3.line()
@@ -132,7 +130,6 @@ export default {
 
     },
     renderLineChart() {
-      console.log("render line chart")
       d3.select(".lineChart").remove();
       this.svg = d3.select("#svg-container-line").append("svg")
           .attr("class", "lineChart")
@@ -165,7 +162,7 @@ export default {
             .data(this.lineData.series)
             .join("path")
             .style("mix-blend-mode", "multiply")
-            .attr("d", d => this.line(d[this.selectedAttr]))
+            .attr("d", d => this.line(d[this.selectedAttrLine.toLowerCase()]))
             .attr("country", d => d.name)
 
 
@@ -188,7 +185,6 @@ export default {
       this.svg.call(this.hover);
     },
     zoomed({transform}) {
-      console.log("zoomed")
        this.zx = transform.rescaleX(this.x).interpolate(d3.interpolateDate);
       //this.zy = transform.rescaleY(this.y).interpolate(d3.interpolateNumber);
 
@@ -196,7 +192,7 @@ export default {
           .x((d, i) =>  this.zx(this.lineData.dates[i]))
           .y(d =>  this.y(d))
 
-      this.path.attr("d", d => this.zoomLine(d[this.selectedAttr]));
+      this.path.attr("d", d => this.zoomLine(d[this.selectedAttrLine.toLowerCase()]));
       this.gx.call(this.xAxis, this.zx);
       //this.gy.call(this.yAxis, this.zy);
     },
@@ -223,13 +219,17 @@ export default {
           .attr("display", "none");
 
       this.dot.append("circle")
-          .attr("r", 2.5);
+          .attr("r", 2.5)
+          .attr("fill","currentColor");
+
 
       this.dot.append("text")
           .attr("font-family", "sans-serif")
           .attr("font-size", 10)
           .attr("text-anchor", "middle")
-          .attr("y", -8);
+          .attr("y", -8)
+          .attr("font-weight", "bold")
+          .attr("fill","currentColor")
 
     },
 
@@ -240,10 +240,10 @@ export default {
        this.xm = this.zx.invert(pointer[0]);
       const ym = this.y.invert(pointer[1]);
       const i = d3.bisectCenter(this.lineData.dates, this.xm);
-      this.s = d3.least(this.lineData.series, d =>  Math.abs(d[this.selectedAttr][i] - ym));
+      this.s = d3.least(this.lineData.series, d =>  Math.abs(d[this.selectedAttrLine.toLowerCase()][i] - ym));
       this.path.attr("stroke", d => d === this.s ? null : "#ddd").filter(d => d === this.s).raise();
-      this.dot.attr("transform", `translate(${this.zx(this.lineData.dates[i])},${this.y(this.s[this.selectedAttr][i])})`);
-      this.dot.select("text").text(this.s.name);
+      this.dot.attr("transform", `translate(${this.x(this.lineData.dates[i])},${this.y(this.s[this.selectedAttrLine.toLowerCase()][i])})`);
+      this.dot.select("text").text(this.s.name).attr("font-weight", "bold").attr("fill","currentColor");
     },
     entered() {
       this.path.style("mix-blend-mode", null).attr("stroke", "#ddd");
@@ -253,18 +253,7 @@ export default {
       this.path.style("mix-blend-mode", "multiply").attr("stroke", null);
       this.dot.attr("display", "none");
     },
-    /*
-    selectCountry(event){
-      event.preventDefault();
-      const pointer = d3.pointer(event);
-      const xm = this.zx.invert(pointer[0]);
-      const ym = this.y.invert(pointer[1]);
-      const i = d3.bisectCenter(this.lineData.dates, xm);
-      const s = d3.least(this.lineData.series, d =>  Math.abs(d[this.selectedAttr][i] - ym));
-      this.$emit("lineChartCountry",s.name);
-      this.$emit("lineChartYear",xm.getUTCFullYear());
-    }
-     */
+
   },
 }
 </script>
